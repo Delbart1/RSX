@@ -7,11 +7,13 @@ import java.net.MulticastSocket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
-public class Chat extends Thread {
+public class ChatEncode extends Thread {
 
 	private String myName;
 	private int port = 7654;
 	private static String group = "224.0.0.2";
+	private final static int encodeKey = 5;
+	private final static int decodeKey = 5;
 	
 	public static void main(String[] args) throws IOException {
 
@@ -28,7 +30,9 @@ public class Chat extends Thread {
 				while (true) {
 					byte buf[] = new byte[1024];
 					Scanner scanner = new Scanner(System.in);
-					buf = (scanner.nextLine()).getBytes();
+					String message = scanner.nextLine();
+					encode(message, encodeKey);
+					buf = message.getBytes();
 					DatagramPacket pack = null;
 					try {
 						pack = new DatagramPacket(buf, buf.length, InetAddress.getByName(group), port);
@@ -69,7 +73,9 @@ public class Chat extends Thread {
 
 							s.receive(pack);
 							userID = pack.getAddress().getHostName();
-							System.out.println(userID + " : " + new String(pack.getData()));
+							
+							String receiveMess = new String(pack.getData(),0,pack.getLength());
+							System.out.println(userID + " : " + decode(receiveMess,decodeKey));
 						}
 
 					} catch (IOException e) {
@@ -83,5 +89,24 @@ public class Chat extends Thread {
 		sender.start();
 		receiver.start();
 
+	}
+
+
+	
+	
+	public static String encode(String message, int shift){
+		String res = "";
+		for(int  i = 0; i<message.length() ;i++){
+			res += (char)(int) (message.charAt(i) + shift);
+		}
+		return res;
+	}
+	
+	public static String decode(String message, int shift){
+		String res = "";
+		for(int  i = 0; i<message.length() ;i++){
+			res += (char)(int) (message.charAt(i) - shift);
+		}
+		return res;
 	}
 }
